@@ -1,0 +1,32 @@
+import { FastifyInstance } from 'fastify';
+import { systemRoutes } from '../modules/system/api/routes.js';
+import { projectRoutes } from '../modules/projects/api/routes.js';
+import { jobRoutes } from '../modules/jobs/api/routes.js';
+import { securityRoutes } from '../modules/security/api/routes.js';
+import { assetRoutes } from '../modules/assets/api/routes.js';
+import { mediaRoutes } from '../modules/media/api/routes.js';
+import { subtitleRoutes } from '../modules/subtitles/api/routes.js';
+import { transcriptionRoutes } from '../modules/transcriptions/api/routes.js';
+import { glossaryRoutes } from '../modules/glossary/api/routes.js';
+import { governanceRoutes } from '../modules/governance/api/routes.js';
+import { ttsRoutes } from '../modules/tts/api/routes.js';
+import { renderRoutes } from '../modules/render/api/routes.js';
+import { publishingRoutes } from '../modules/publishing/api/routes.js';
+import { publishingJobRoutes } from '../modules/publishing/api/job-routes.js';
+
+export async function registerRoutes(app: FastifyInstance) {
+  await app.register(systemRoutes);
+  await app.register(projectRoutes);
+  await app.register(jobRoutes);
+  await app.register(securityRoutes);
+  await app.register(assetRoutes);
+  await app.register(mediaRoutes);
+  await app.register(subtitleRoutes);
+  await app.register(transcriptionRoutes);
+  await app.register(glossaryRoutes);
+  await app.register(governanceRoutes);
+  await app.register(ttsRoutes);
+  await app.register(renderRoutes);
+  await app.register(publishingRoutes);
+  await app.register(publishingJobRoutes);
+}

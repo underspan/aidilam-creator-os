@@ -1,0 +1,528 @@
+name: aidilam
+
+services:
+  postgres:
+    image: postgres:16.9-bookworm
+    container_name: aidilam-postgres
+
+    restart: unless-stopped
+
+    networks:
+      - aidilam-internal
+
+    volumes:
+      - /data/aidilam/postgres:/var/lib/postgresql/data
+      - /opt/aidilam/config/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - /opt/aidilam/config/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+
+    environment:
+      POSTGRES_DB: aidilam
+      POSTGRES_USER: aidilam_app
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGDATA: /var/lib/postgresql/data
+      TZ: Asia/Ho_Chi_Minh
+
+    secrets:
+      - postgres_password
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U aidilam_app -d aidilam
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 12G
+        reservations:
+          memory: 4G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "database"
+      com.aidilam.managed-by: "docker-compose"
+
+  redis:
+    image: redis:7.4.4-bookworm
+    container_name: aidilam-redis
+
+    restart: unless-stopped
+
+    networks:
+      - aidilam-internal
+
+    volumes:
+      - /data/aidilam/redis:/data
+      - /opt/aidilam/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+
+    command:
+      - /bin/sh
+      - -c
+      - |
+        REDIS_PASS=$$(cat /run/secrets/redis_password | tr -d '\n')
+        exec docker-entrypoint.sh redis-server /usr/local/etc/redis/redis.conf --requirepass "$$REDIS_PASS"
+
+    secrets:
+      - redis_password
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli -a "$$(cat /run/secrets/redis_password | tr -d '\n')" ping | grep -q PONG
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    cap_add:
+      - SETGID
+      - SETUID
+      - CHOWN
+      - FOWNER
+      - DAC_OVERRIDE
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 6G
+        reservations:
+          memory: 2G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "5"
+
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "cache"
+      com.aidilam.managed-by: "docker-compose"
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.6
+    container_name: aidilam-qdrant
+
+    restart: unless-stopped
+
+    networks:
+      - aidilam-internal
+
+    volumes:
+      - /data/aidilam/qdrant:/qdrant/storage
+      - /backup/aidilam/qdrant:/qdrant/snapshots
+      - /opt/aidilam/config/qdrant/config.yaml:/qdrant/config/production.yaml:ro
+
+    environment:
+      QDRANT__SERVICE__API_KEY_FILE: /run/secrets/qdrant_api_key
+
+    command:
+      - /bin/sh
+      - -c
+      - |
+        export QDRANT__SERVICE__API_KEY=$$(cat /run/secrets/qdrant_api_key | tr -d '\n')
+        exec ./qdrant --config-path /qdrant/config/production.yaml
+
+    secrets:
+      - qdrant_api_key
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "grep -q ':18BD' /proc/net/tcp || exit 1"
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 12G
+        reservations:
+          memory: 4G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "vector-database"
+      com.aidilam.managed-by: "docker-compose"
+
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    container_name: aidilam-minio
+
+    restart: unless-stopped
+
+    networks:
+      - aidilam-internal
+
+    volumes:
+      - /data/aidilam/minio:/data
+
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        export MINIO_ROOT_USER=$$(cat /run/secrets/minio_root_user | tr -d '\n')
+        export MINIO_ROOT_PASSWORD=$$(cat /run/secrets/minio_root_password | tr -d '\n')
+        exec minio server /data --console-address ":9001"
+
+    command: []
+
+    secrets:
+      - minio_root_user
+      - minio_root_password
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:9000/minio/health/live || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8G
+        reservations:
+          memory: 2G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "object-storage"
+      com.aidilam.managed-by: "docker-compose"
+
+  app:
+    build:
+      context: /opt/aidilam/apps/api
+      dockerfile: Dockerfile
+    image: aidilam-app:0.1.0
+    container_name: aidilam-app
+
+    restart: unless-stopped
+
+    networks:
+      - aidilam-internal
+
+    expose:
+      - "3000"
+
+    read_only: true
+
+    tmpfs:
+      - /tmp
+
+    environment:
+      NODE_ENV: production
+      APP_PORT: "3000"
+      AUTH_MODE: "service_token"
+      PUBLIC_EXPOSURE: "false"
+      SERVICE_TOKEN_PEPPER_PATH: "/run/secrets/service_token_pepper"
+      POSTGRES_HOST: aidilam-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: aidilam
+      POSTGRES_USER: aidilam_runtime
+      REDIS_HOST: aidilam-redis
+      REDIS_PORT: "6379"
+      QDRANT_HOST: aidilam-qdrant
+      QDRANT_PORT: "6333"
+      MINIO_ENDPOINT: aidilam-minio
+      MINIO_PORT: "9000"
+      MINIO_BUCKET: aidilam-private
+
+    secrets:
+      - postgres_runtime_password
+      - redis_password
+      - qdrant_api_key
+      - minio_runtime_access_key
+      - minio_runtime_secret_key
+      - service_token_pepper
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "node -e \"const http = require('http'); const r = http.get('http://127.0.0.1:3000/health/live', res => { process.exit(res.statusCode === 200 ? 0 : 1) }); r.on('error', () => process.exit(1))\""
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+          pids: 256
+        reservations:
+          memory: 512M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "5"
+
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "application"
+      com.aidilam.managed-by: "docker-compose"
+
+  worker:
+    build:
+      context: /opt/aidilam/apps/worker
+      dockerfile: Dockerfile
+    image: aidilam-worker:0.1.0
+    container_name: aidilam-worker
+
+    restart: unless-stopped
+
+    networks:
+      - aidilam-internal
+
+    expose:
+      - "3001"
+
+    read_only: true
+
+    tmpfs:
+      - /tmp
+
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: aidilam-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: aidilam
+      POSTGRES_USER: aidilam_runtime
+      REDIS_HOST: aidilam-redis
+      REDIS_PORT: "6379"
+      MINIO_ENDPOINT: aidilam-minio
+      MINIO_PORT: "9000"
+      MINIO_BUCKET: aidilam-private
+      WORKER_CONCURRENCY: "2"
+      WORKER_LEASE_SECONDS: "60"
+      WORKER_HEARTBEAT_SECONDS: "15"
+      WORKER_GRACE_PERIOD_SECONDS: "30"
+      AIDILAM_VALIDATION_MODE: "false"
+      PUBLISHING_GLOBAL_CONCURRENCY: "2"
+      PUBLISHING_PROJECT_CONCURRENCY: "3"
+      PUBLISHING_PLATFORM_CONCURRENCY: "10"
+      PUBLISHING_ACCOUNT_CONCURRENCY: "10"
+      PUBLISHING_WORKER_CONCURRENCY: "2"
+
+    secrets:
+      - postgres_runtime_password
+      - redis_password
+      - minio_runtime_access_key
+      - minio_runtime_secret_key
+      - worker_service_token
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "node -e \"const http = require('http'); const r = http.get('http://127.0.0.1:3001/health/live', res => { process.exit(res.statusCode === 200 ? 0 : 1) }); r.on('error', () => process.exit(1))\""
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 4G
+          pids: 256
+        reservations:
+          memory: 1G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "5"
+
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "worker"
+      com.aidilam.managed-by: "docker-compose"
+
+  foundation-canary:
+    image: nginx:alpine
+    container_name: aidilam-foundation-canary
+    profiles:
+      - validation
+
+    restart: unless-stopped
+    networks:
+      - aidilam-internal
+    ports:
+      - "127.0.0.1:${AIDILAM_CANARY_PORT:-18080}:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          memory: 64M
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+      com.aidilam.role: "canary"
+      com.aidilam.managed-by: "docker-compose"
+
+networks:
+  aidilam-internal:
+    name: aidilam-internal
+    driver: bridge
+    labels:
+      com.aidilam.project: "aidilam"
+      com.aidilam.owner: "aidilam"
+      com.aidilam.environment: "foundation"
+
+secrets:
+  postgres_password:
+    file: /opt/aidilam/secrets/postgres_password
+  redis_password:
+    file: /opt/aidilam/secrets/redis_password
+  qdrant_api_key:
+    file: /opt/aidilam/secrets/qdrant_api_key
+  minio_root_user:
+    file: /opt/aidilam/secrets/minio_root_user
+  minio_root_password:
+    file: /opt/aidilam/secrets/minio_root_password
+  postgres_runtime_password:
+    file: /opt/aidilam/secrets/postgres_runtime_password
+  minio_runtime_access_key:
+    file: /opt/aidilam/secrets/minio_runtime_access_key
+  minio_runtime_secret_key:
+    file: /opt/aidilam/secrets/minio_runtime_secret_key
+  service_token_pepper:
+    file: /opt/aidilam/secrets/service_token_pepper
+  worker_service_token:
+    file: /opt/aidilam/secrets/worker_service_token

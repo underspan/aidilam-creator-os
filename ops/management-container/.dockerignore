@@ -1,0 +1,5 @@
+# Do not include these in the build context
+.env
+*.md
+*.sh
+.git

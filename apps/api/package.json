@@ -1,0 +1,38 @@
+{
+  "name": "aidilam-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'lint ok'",
+    "test": "vitest run",
+    "validate:integrations": "node dist/validation/integration-validation.js",
+    "db:status": "node-pg-migrate --database-url-var DATABASE_URL --migration-file-language sql --migrations-dir migrations status",
+    "db:migrate": "node-pg-migrate --database-url-var DATABASE_URL --migration-file-language sql --migrations-dir migrations up",
+    "db:rollback": "node-pg-migrate --database-url-var DATABASE_URL --migration-file-language sql --migrations-dir migrations down",
+    "db:create-migration": "node-pg-migrate --migration-file-language sql --migrations-dir migrations create"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/swagger": "^9.6.0",
+    "@fastify/swagger-ui": "^5.2.1",
+    "@qdrant/js-client-rest": "1.14.0",
+    "bullmq": "5.34.5",
+    "fastify": "5.3.3",
+    "ioredis": "5.6.1",
+    "minio": "8.0.5",
+    "node-pg-migrate": "^7.9.1",
+    "pg": "8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.0",
+    "@types/pg": "8.11.11",
+    "tsx": "4.19.4",
+    "typescript": "5.8.3",
+    "vitest": "^3.1.3"
+  }
+}

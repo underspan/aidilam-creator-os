@@ -1,0 +1,62 @@
+# =============================================================================
+# AIĐiLàm Management Container — Docker Compose Configuration
+#
+# This is an OPERATIONAL WORKSPACE container, NOT an application service.
+# It provides Kiro CLI, Docker CLI, Git, and SSH for managing AIĐiLàm.
+#
+# Usage:
+#   docker compose build
+#   docker compose up -d
+#   docker compose exec management bash
+#
+# =============================================================================
+
+services:
+  management:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: aidilam-management:latest
+    container_name: aidilam-management
+    hostname: aidilam-management
+
+    # Host network mode — same as current container
+    network_mode: host
+
+    # Auto-restart unless explicitly stopped
+    restart: unless-stopped
+
+    # Default working directory
+    working_dir: /opt/aidilam
+
+    volumes:
+      # Docker socket — required for managing Docker resources
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Host /opt — contains AIĐiLàm source and Underspan (read via filesystem)
+      - /opt:/opt
+
+      # Persistent SSH configuration (bind from host path)
+      # Uncomment after validating host path:
+      # - ${SSH_CONFIG_PATH:-/root/.ssh}:/root/.ssh:ro
+
+      # Enable /data only after host validation:
+      # - /data:/data
+
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TERM: xterm-256color
+
+    labels:
+      com.aidilam.role: management
+      com.aidilam.owner: operations
+      com.aidilam.application-service: "false"
+
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+
+    # Interactive terminal support (for Kiro CLI)
+    stdin_open: true
+    tty: true

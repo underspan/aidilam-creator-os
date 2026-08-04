@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Runtime data
+data/
+logs/
+*.log
+tmp/
+.cache/
+
+# Management state (SSH keys, runtime tokens)
+.management-state/
+
+# Media and storage (runtime-generated)
+uploads/
+downloads/
+rendered/
+media/
+storage/
+
+# Database data
+pgdata/
+redisdata/
+qdrantdata/
+miniodata/
+
+# Editor and OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup archives
+/opt/aidilam-backups/
+
+# SSH keys and backups
+ops/management-container/.ssh-backup/
+*.ed25519
+*.ed25519.pub
