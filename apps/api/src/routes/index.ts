@@ -13,6 +13,7 @@ import { ttsRoutes } from '../modules/tts/api/routes.js';
 import { renderRoutes } from '../modules/render/api/routes.js';
 import { publishingRoutes } from '../modules/publishing/api/routes.js';
 import { publishingJobRoutes } from '../modules/publishing/api/job-routes.js';
+import { youtubeOAuthRoutes } from '../modules/youtube-oauth/api/routes.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(systemRoutes);
@@ -29,4 +30,5 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(renderRoutes);
   await app.register(publishingRoutes);
   await app.register(publishingJobRoutes);
+  await app.register(youtubeOAuthRoutes);
 }
