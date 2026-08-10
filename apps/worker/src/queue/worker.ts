@@ -23,6 +23,26 @@ export function startWorker(): Worker {
       const jobId = job.data.jobId as string;
       const jobType = job.data.jobType as string;
 
+      // === SHADOW WORKFLOW DISPATCH (separate path from legacy jobs) ===
+      if (jobType === 'shadow_workflow') {
+        const executionId = job.data.executionId as string;
+        logger.info('Processing shadow workflow', { executionId, bullmqJobId: job.id });
+        const handler = getJobHandler('shadow_workflow');
+        const context: JobContext = {
+          jobId: executionId,
+          jobType: 'shadow_workflow',
+          projectId: '',
+          attemptCount: 1,
+          maxAttempts: 3,
+          inputPayload: { executionId },
+          reportProgress: async (percent: number) => { await job.updateProgress(percent); },
+          checkCancellation: async () => { return false; /* shadow uses its own cancellation via DB state */ },
+        };
+        const result = await handler(context);
+        logger.info('Shadow workflow completed', { executionId, result: result?.status });
+        return result;
+      }
+
       logger.info('Processing job', { jobId, jobType, bullmqJobId: job.id });
 
       // Claim the job in PostgreSQL
