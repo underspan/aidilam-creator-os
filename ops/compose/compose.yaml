@@ -275,6 +275,9 @@ services:
     expose:
       - "3000"
 
+    ports:
+      - "10.0.2.82:3000:3000"
+
     read_only: true
 
     tmpfs:
