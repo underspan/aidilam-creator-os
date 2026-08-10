@@ -739,6 +739,24 @@ async function settleSuccess(
     // Audit events
     await client.query(
       `INSERT INTO aidilam_app.publishing_audit_events (project_id, publishing_job_id, event_type, actor_type, actor_id, metadata_safe_json)
+       VALUES ($1, $2, 'attempt_succeeded', 'system', $3, $4)`,
+      [projectId, jobId, WORKER_ID, JSON.stringify({ attemptId, platformKey })]
+    );
+
+    await client.query(
+      `INSERT INTO aidilam_app.publishing_audit_events (project_id, publishing_job_id, event_type, actor_type, actor_id, metadata_safe_json)
+       VALUES ($1, $2, 'usage_recorded', 'system', $3, $4)`,
+      [projectId, jobId, WORKER_ID, JSON.stringify({ attemptId, platformKey, quotaUnits: quotaSnapshot.quotaUnits || 1 })]
+    );
+
+    await client.query(
+      `INSERT INTO aidilam_app.publishing_audit_events (project_id, publishing_job_id, event_type, actor_type, actor_id, metadata_safe_json)
+       VALUES ($1, $2, 'reservation_committed', 'system', $3, $4)`,
+      [projectId, jobId, WORKER_ID, JSON.stringify({ attemptId })]
+    );
+
+    await client.query(
+      `INSERT INTO aidilam_app.publishing_audit_events (project_id, publishing_job_id, event_type, actor_type, actor_id, metadata_safe_json)
        VALUES ($1, $2, 'publishing_job_succeeded', 'system', $3, $4)`,
       [projectId, jobId, WORKER_ID, JSON.stringify({ attemptId, platformKey })]
     );

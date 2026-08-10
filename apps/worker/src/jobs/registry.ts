@@ -8,6 +8,8 @@ import { handleTranscriptionOrchestrate } from './transcription-orchestrate.js';
 import { handleTtsSynthesize } from './tts-synthesize.js';
 import { handleTtsPreview } from './tts-preview.js';
 import { handleVideoRender } from './video-render.js';
+import { handleVideoPipeline } from './video-pipeline.js';
+import { handleShadowWorkflow } from './shadow-workflow.js';
 
 interface JobRegistryEntry {
   handler: JobHandler;
@@ -53,6 +55,14 @@ const registry: Record<string, JobRegistryEntry> = {
   },
   video_render: {
     handler: handleVideoRender,
+    enabled: true,
+  },
+  video_pipeline: {
+    handler: handleVideoPipeline,
+    enabled: true,
+  },
+  shadow_workflow: {
+    handler: handleShadowWorkflow,
     enabled: true,
   },
 };
