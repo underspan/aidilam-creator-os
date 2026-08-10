@@ -2,6 +2,8 @@ import Fastify from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
+import formbody from '@fastify/formbody';
 import { config } from './config/index.js';
 import { logger } from './core/logging/index.js';
 import { correlationIdPlugin } from './plugins/correlation-id.js';
@@ -9,6 +11,7 @@ import { errorHandlerPlugin } from './plugins/error-handler.js';
 import { requestLoggerPlugin } from './plugins/request-logger.js';
 import { authenticationPlugin } from './plugins/authentication.js';
 import { rateLimitPlugin } from './plugins/rate-limit.js';
+import { csrfPlugin } from './plugins/csrf.js';
 import { registerRoutes } from './routes/index.js';
 import { redis } from './infrastructure/redis/index.js';
 import { shutdownPostgres } from './infrastructure/database/index.js';
@@ -16,11 +19,14 @@ import { shutdownRedis } from './infrastructure/redis/index.js';
 
 const app = Fastify({ logger: false, bodyLimit: 1048576, requestIdHeader: 'x-request-id' });
 
+await app.register(cookie);
+await app.register(formbody);
 await app.register(cors, { origin: false });
 await app.register(correlationIdPlugin);
 await app.register(errorHandlerPlugin);
 await app.register(requestLoggerPlugin);
 await app.register(authenticationPlugin);
+await app.register(csrfPlugin);
 await app.register(rateLimitPlugin);
 await app.register(swagger, {
   openapi: {

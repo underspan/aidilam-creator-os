@@ -17,7 +17,9 @@
     "db:create-migration": "node-pg-migrate --migration-file-language sql --migrations-dir migrations create"
   },
   "dependencies": {
+    "@fastify/cookie": "^10.0.1",
     "@fastify/cors": "^10.1.0",
+    "@fastify/formbody": "^8.0.2",
     "@fastify/swagger": "^9.6.0",
     "@fastify/swagger-ui": "^5.2.1",
     "@qdrant/js-client-rest": "1.14.0",

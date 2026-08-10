@@ -14,8 +14,14 @@ import { renderRoutes } from '../modules/render/api/routes.js';
 import { publishingRoutes } from '../modules/publishing/api/routes.js';
 import { publishingJobRoutes } from '../modules/publishing/api/job-routes.js';
 import { youtubeOAuthRoutes } from '../modules/youtube-oauth/api/routes.js';
+import { videoReviewRoutes } from '../modules/video-review/api/routes.js';
+import { dashboardRoutes } from '../modules/dashboard/api/routes.js';
+import { browserAuthRoutes } from '../modules/auth/api/routes.js';
+import { uiRoutes } from '../modules/ui/routes.js';
 
 export async function registerRoutes(app: FastifyInstance) {
+  await app.register(browserAuthRoutes);
+  await app.register(uiRoutes);
   await app.register(systemRoutes);
   await app.register(projectRoutes);
   await app.register(jobRoutes);
@@ -31,4 +37,6 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(publishingRoutes);
   await app.register(publishingJobRoutes);
   await app.register(youtubeOAuthRoutes);
+  await app.register(videoReviewRoutes);
+  await app.register(dashboardRoutes);
 }

@@ -28,7 +28,12 @@ declare module 'fastify' {
 const UNAUTHENTICATED_ROUTES = new Set([
   '/health/live',
   '/health/ready',
+  '/login',
+  '/logout',
 ]);
+
+// UI routes that handle their own session auth (redirect to /login if unauthenticated)
+const UI_SELF_AUTH_PREFIXES = ['/', '/projects'];
 
 // Routes that require authentication but not specific permission checks
 // (the route handler itself will do permission checks)
@@ -58,8 +63,15 @@ const authenticationPluginFn: FastifyPluginAsync = async (app) => {
   app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
     const url = request.url.split('?')[0]; // strip query params
 
-    // Allow unauthenticated access to health endpoints
+    // Allow unauthenticated access to health endpoints and login
     if (UNAUTHENTICATED_ROUTES.has(url)) {
+      request.identity = ANONYMOUS_IDENTITY;
+      return;
+    }
+
+    // UI routes (non-API) handle their own session auth internally
+    // They redirect to /login if unauthenticated — don't block with 401
+    if (!url.startsWith('/api/') && !url.startsWith('/health')) {
       request.identity = ANONYMOUS_IDENTITY;
       return;
     }
@@ -77,8 +89,20 @@ const authenticationPluginFn: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    // service_token mode: require valid Bearer token
+    // service_token mode: require valid Bearer token OR valid session cookie
     if (config.auth.mode === 'service_token') {
+      // Try session cookie first (browser dashboard)
+      const sessionCookie = (request as any).cookies?.['aidilam_session'];
+      if (sessionCookie) {
+        const sessionIdentity = await authenticateSessionCookie(sessionCookie);
+        if (sessionIdentity) {
+          request.identity = sessionIdentity;
+          return;
+        }
+        // Invalid/expired session — fall through to bearer check
+      }
+
+      // Try Bearer token (API/machine access)
       const identity = await authenticateServiceToken(request, pepper!);
       if (!identity) {
         throw new AppError('AUTHENTICATION_REQUIRED', 'Valid authentication credentials are required');
@@ -104,6 +128,61 @@ const authenticationPluginFn: FastifyPluginAsync = async (app) => {
     throw new AppError('INTERNAL_ERROR', 'Invalid authentication configuration');
   });
 };
+
+async function authenticateSessionCookie(sessionId: string): Promise<RequestIdentity | null> {
+  try {
+    const { createHash } = await import('node:crypto');
+    const sessionHash = createHash('sha256').update(sessionId).digest('hex');
+
+    const sessionRes = await pgPool.query(
+      `SELECT bs.user_id, u.display_name, u.status
+       FROM aidilam_app.browser_sessions bs
+       JOIN aidilam_app.users u ON u.id = bs.user_id
+       WHERE bs.session_hash = $1 AND bs.revoked_at IS NULL AND bs.expires_at > now()`,
+      [sessionHash]
+    );
+
+    if (sessionRes.rows.length === 0) return null;
+    const row = sessionRes.rows[0];
+    if (row.status !== 'active') return null;
+
+    // Load user roles (reuse existing RBAC)
+    const rolesRes = await pgPool.query(
+      `SELECT r.code FROM aidilam_app.roles r
+       JOIN aidilam_app.project_role_assignments pra ON pra.role_id = r.id
+       WHERE pra.user_id = $1`,
+      [row.user_id]
+    ).catch(() => ({ rows: [] }));
+
+    const globalRoles = rolesRes.rows.map((r: any) => r.code);
+
+    // Load permissions
+    const permsRes = await pgPool.query(
+      `SELECT DISTINCT p.code FROM aidilam_app.permissions p
+       JOIN aidilam_app.role_permissions rp ON rp.permission_id = p.id
+       JOIN aidilam_app.roles r ON r.id = rp.role_id
+       JOIN aidilam_app.project_role_assignments pra ON pra.role_id = r.id
+       WHERE pra.user_id = $1`,
+      [row.user_id]
+    ).catch(() => ({ rows: [] }));
+
+    const permissions = permsRes.rows.map((p: any) => p.code);
+
+    // For owner/admin, grant all permissions
+    const isAdmin = globalRoles.includes('system_admin') || globalRoles.includes('owner');
+
+    return {
+      actorType: 'user',
+      actorId: row.user_id,
+      displayName: row.display_name || 'User',
+      globalRoles,
+      globalPermissions: isAdmin ? ['*'] : permissions,
+      projectRoles: {},
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function authenticateServiceToken(
   request: FastifyRequest,
