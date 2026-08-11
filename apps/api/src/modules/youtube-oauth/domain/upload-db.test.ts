@@ -32,11 +32,11 @@ beforeAll(async () => {
 
   // Create test project and credential binding fixtures
   await pool.query(
-    `INSERT INTO aidilam_app.projects (id, code, name, status) VALUES ($1, $2, 'A4R-test-project', 'active') ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO aidilam_app.projects (id, code, name, status, workspace_id) VALUES ($1, $2, 'A4R-test-project', 'active', 'a0000000-0000-4000-a000-000000000001') ON CONFLICT (id) DO NOTHING`,
     [TEST_PROJECT_ID, `a4r-test-${TEST_PROJECT_ID.slice(0, 8)}`]
   );
   await pool.query(
-    `INSERT INTO aidilam_app.projects (id, code, name, status) VALUES ($1, $2, 'A4R-foreign-project', 'active') ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO aidilam_app.projects (id, code, name, status, workspace_id) VALUES ($1, $2, 'A4R-foreign-project', 'active', 'a0000000-0000-4000-a000-000000000001') ON CONFLICT (id) DO NOTHING`,
     [FOREIGN_PROJECT_ID, `a4r-foreign-${FOREIGN_PROJECT_ID.slice(0, 8)}`]
   );
   // Need a platform account for the binding

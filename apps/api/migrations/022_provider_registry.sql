@@ -38,31 +38,34 @@ CREATE INDEX IF NOT EXISTS idx_ws_provider_configs_capability ON aidilam_app.wor
 
 -- Seed provider catalog
 INSERT INTO aidilam_app.provider_definitions (id, code, name, description, provider_type, capabilities, network_required, credential_required, status) VALUES
-  ('p0000000-0000-4000-a000-000000000001', 'faster_whisper', 'faster-whisper', 'Local speech-to-text using Whisper models', 'local', ARRAY['stt'], false, false, 'available'),
-  ('p0000000-0000-4000-a000-000000000002', 'google_translate_free', 'Google Translate (Community)', 'Free online neural machine translation', 'online_free', ARRAY['translation'], true, false, 'available'),
-  ('p0000000-0000-4000-a000-000000000003', 'edge_tts', 'Microsoft Edge TTS', 'Free online neural text-to-speech', 'online_free', ARRAY['tts'], true, false, 'available'),
-  ('p0000000-0000-4000-a000-000000000004', 'ffmpeg', 'FFmpeg', 'Local media processing and rendering engine', 'local', ARRAY['render'], false, false, 'available'),
-  ('p0000000-0000-4000-a000-000000000010', 'openai', 'OpenAI', 'GPT and Whisper API', 'online_paid', ARRAY['llm','translation','stt','tts'], true, true, 'coming_soon'),
-  ('p0000000-0000-4000-a000-000000000011', 'gemini', 'Google Gemini', 'Gemini multimodal AI', 'online_paid', ARRAY['llm','translation'], true, true, 'coming_soon'),
-  ('p0000000-0000-4000-a000-000000000012', 'claude', 'Anthropic Claude', 'Claude AI assistant', 'online_paid', ARRAY['llm','translation'], true, true, 'coming_soon'),
-  ('p0000000-0000-4000-a000-000000000013', 'elevenlabs', 'ElevenLabs', 'Premium voice synthesis', 'online_paid', ARRAY['tts'], true, true, 'coming_soon'),
-  ('p0000000-0000-4000-a000-000000000014', 'deepseek', 'DeepSeek', 'Open-weight LLM', 'online_paid', ARRAY['llm','translation'], true, true, 'coming_soon')
+  ('b0000000-0000-4000-a000-000000000001', 'faster_whisper', 'faster-whisper', 'Local speech-to-text using Whisper models', 'local', ARRAY['stt'], false, false, 'available'),
+  ('b0000000-0000-4000-a000-000000000002', 'google_translate_free', 'Google Translate (Community)', 'Free online neural machine translation', 'online_free', ARRAY['translation'], true, false, 'available'),
+  ('b0000000-0000-4000-a000-000000000003', 'edge_tts', 'Microsoft Edge TTS', 'Free online neural text-to-speech', 'online_free', ARRAY['tts'], true, false, 'available'),
+  ('b0000000-0000-4000-a000-000000000004', 'ffmpeg', 'FFmpeg', 'Local media processing and rendering engine', 'local', ARRAY['render'], false, false, 'available'),
+  ('b0000000-0000-4000-a000-000000000010', 'openai', 'OpenAI', 'GPT and Whisper API', 'online_paid', ARRAY['llm','translation','stt','tts'], true, true, 'coming_soon'),
+  ('b0000000-0000-4000-a000-000000000011', 'gemini', 'Google Gemini', 'Gemini multimodal AI', 'online_paid', ARRAY['llm','translation'], true, true, 'coming_soon'),
+  ('b0000000-0000-4000-a000-000000000012', 'claude', 'Anthropic Claude', 'Claude AI assistant', 'online_paid', ARRAY['llm','translation'], true, true, 'coming_soon'),
+  ('b0000000-0000-4000-a000-000000000013', 'elevenlabs', 'ElevenLabs', 'Premium voice synthesis', 'online_paid', ARRAY['tts'], true, true, 'coming_soon'),
+  ('b0000000-0000-4000-a000-000000000014', 'deepseek', 'DeepSeek', 'Open-weight LLM', 'online_paid', ARRAY['llm','translation'], true, true, 'coming_soon')
 ON CONFLICT (code) DO NOTHING;
 
 -- Seed default workspace configs for Workspace A
 INSERT INTO aidilam_app.workspace_provider_configs (workspace_id, provider_id, capability, enabled, is_default) VALUES
-  ('a0000000-0000-4000-a000-000000000001', 'p0000000-0000-4000-a000-000000000001', 'stt', true, true),
-  ('a0000000-0000-4000-a000-000000000001', 'p0000000-0000-4000-a000-000000000002', 'translation', true, true),
-  ('a0000000-0000-4000-a000-000000000001', 'p0000000-0000-4000-a000-000000000003', 'tts', true, true),
-  ('a0000000-0000-4000-a000-000000000001', 'p0000000-0000-4000-a000-000000000004', 'render', true, true)
+  ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-a000-000000000001', 'stt', true, true),
+  ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-a000-000000000002', 'translation', true, true),
+  ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-a000-000000000003', 'tts', true, true),
+  ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-a000-000000000004', 'render', true, true)
 ON CONFLICT (workspace_id, provider_id, capability) DO NOTHING;
 
 -- Seed for Workspace B
+INSERT INTO aidilam_app.workspaces (id, code, name, description, status)
+VALUES ('b0000000-0000-4000-a000-000000000002', 'workspace-b', 'Workspace B', 'Second workspace', 'active')
+ON CONFLICT (id) DO NOTHING;
 INSERT INTO aidilam_app.workspace_provider_configs (workspace_id, provider_id, capability, enabled, is_default) VALUES
-  ('b0000000-0000-4000-a000-000000000002', 'p0000000-0000-4000-a000-000000000001', 'stt', true, true),
-  ('b0000000-0000-4000-a000-000000000002', 'p0000000-0000-4000-a000-000000000002', 'translation', true, true),
-  ('b0000000-0000-4000-a000-000000000002', 'p0000000-0000-4000-a000-000000000003', 'tts', true, true),
-  ('b0000000-0000-4000-a000-000000000002', 'p0000000-0000-4000-a000-000000000004', 'render', true, true)
+  ('b0000000-0000-4000-a000-000000000002', 'b0000000-0000-4000-a000-000000000001', 'stt', true, true),
+  ('b0000000-0000-4000-a000-000000000002', 'b0000000-0000-4000-a000-000000000002', 'translation', true, true),
+  ('b0000000-0000-4000-a000-000000000002', 'b0000000-0000-4000-a000-000000000003', 'tts', true, true),
+  ('b0000000-0000-4000-a000-000000000002', 'b0000000-0000-4000-a000-000000000004', 'render', true, true)
 ON CONFLICT (workspace_id, provider_id, capability) DO NOTHING;
 
 -- Rollback: DROP TABLE aidilam_app.workspace_provider_configs; DROP TABLE aidilam_app.provider_definitions;

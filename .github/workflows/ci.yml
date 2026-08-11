@@ -15,6 +15,30 @@ jobs:
     defaults:
       run:
         working-directory: apps/api
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: aidilam_ci
+          POSTGRES_PASSWORD: ci_test_only
+          POSTGRES_DB: aidilam_ci
+        options: >-
+          --health-cmd "pg_isready -U aidilam_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: '5432'
+      POSTGRES_DB: aidilam_ci
+      POSTGRES_USER: aidilam_ci
+      POSTGRES_PASSWORD: ci_test_only
+      DATABASE_URL: postgres://aidilam_ci:ci_test_only@localhost:5432/aidilam_ci
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +50,22 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Bootstrap CI database
+        run: |
+          PGPASSWORD=ci_test_only psql -h localhost -U aidilam_ci -d aidilam_ci <<'SQL'
+            CREATE SCHEMA IF NOT EXISTS aidilam_app;
+            DO $$ BEGIN CREATE ROLE aidilam_runtime LOGIN; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+            DO $$ BEGIN CREATE ROLE aidilam_migrator LOGIN; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+            GRANT ALL ON SCHEMA aidilam_app TO aidilam_ci;
+            GRANT ALL ON SCHEMA aidilam_app TO aidilam_runtime;
+            GRANT ALL ON SCHEMA aidilam_app TO aidilam_migrator;
+            GRANT aidilam_runtime TO aidilam_ci;
+            GRANT aidilam_migrator TO aidilam_ci;
+          SQL
+
+      - name: Apply migrations
+        run: npx node-pg-migrate up --migrations-dir migrations --migration-file-language sql
 
       - name: Typecheck
         run: npm run build

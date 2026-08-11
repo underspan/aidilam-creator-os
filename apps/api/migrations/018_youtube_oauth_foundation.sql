@@ -79,12 +79,12 @@ CREATE INDEX idx_youtube_oauth_audit_project ON aidilam_app.youtube_oauth_audit_
 CREATE INDEX idx_youtube_oauth_audit_type ON aidilam_app.youtube_oauth_audit_events(event_type);
 
 -- Register YouTube OAuth permissions
-INSERT INTO aidilam_app.permissions (id, code, description) VALUES
-  (gen_random_uuid(), 'youtube.oauth.configure', 'Configure YouTube OAuth client'),
-  (gen_random_uuid(), 'youtube.oauth.authorize', 'Authorize YouTube channel'),
-  (gen_random_uuid(), 'youtube.oauth.view', 'View YouTube OAuth status'),
-  (gen_random_uuid(), 'youtube.oauth.revoke', 'Revoke YouTube credentials'),
-  (gen_random_uuid(), 'youtube.account.bind', 'Bind YouTube account/channel')
+INSERT INTO aidilam_app.permissions (id, code, resource, action, description) VALUES
+  (gen_random_uuid(), 'youtube.oauth.configure', 'youtube_oauth', 'configure', 'Configure YouTube OAuth client'),
+  (gen_random_uuid(), 'youtube.oauth.authorize', 'youtube_oauth', 'authorize', 'Authorize YouTube channel'),
+  (gen_random_uuid(), 'youtube.oauth.view', 'youtube_oauth', 'view', 'View YouTube OAuth status'),
+  (gen_random_uuid(), 'youtube.oauth.revoke', 'youtube_oauth', 'revoke', 'Revoke YouTube credentials'),
+  (gen_random_uuid(), 'youtube.account.bind', 'youtube_account', 'bind', 'Bind YouTube account/channel')
 ON CONFLICT DO NOTHING;
 
 -- Grant YouTube OAuth permissions to system_admin

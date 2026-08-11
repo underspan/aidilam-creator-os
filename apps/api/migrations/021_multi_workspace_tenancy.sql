@@ -35,19 +35,19 @@ CREATE INDEX IF NOT EXISTS idx_projects_workspace ON aidilam_app.projects(worksp
 
 -- Create default workspace and backfill
 INSERT INTO aidilam_app.workspaces (id, code, name, description, status, owner_user_id)
-VALUES ('00000000-0000-4000-a000-workspace00001', 'default', 'AIĐiLàm Studio', 'Default workspace', 'active',
+VALUES ('a0000000-0000-4000-a000-000000000001', 'default', 'AIĐiLàm Studio', 'Default workspace', 'active',
   (SELECT id FROM aidilam_app.users WHERE email = 'owner@aidilam.dev' LIMIT 1))
 ON CONFLICT (code) DO NOTHING;
 
 -- Backfill all projects to default workspace
-UPDATE aidilam_app.projects SET workspace_id = '00000000-0000-4000-a000-workspace00001' WHERE workspace_id IS NULL;
+UPDATE aidilam_app.projects SET workspace_id = 'a0000000-0000-4000-a000-000000000001' WHERE workspace_id IS NULL;
 
 -- Make workspace_id NOT NULL after backfill
 ALTER TABLE aidilam_app.projects ALTER COLUMN workspace_id SET NOT NULL;
 
 -- Add owner as workspace member
 INSERT INTO aidilam_app.workspace_members (workspace_id, user_id, role)
-SELECT '00000000-0000-4000-a000-workspace00001', id, 'owner'
+SELECT 'a0000000-0000-4000-a000-000000000001', id, 'owner'
 FROM aidilam_app.users WHERE email = 'owner@aidilam.dev'
 ON CONFLICT (workspace_id, user_id) DO NOTHING;
 

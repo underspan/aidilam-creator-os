@@ -33,11 +33,11 @@ CREATE TABLE IF NOT EXISTS aidilam_app.youtube_upload_sessions (
   CONSTRAINT chk_offset_le_total CHECK (next_byte_offset <= total_bytes)
 );
 
-CREATE INDEX idx_upload_sessions_project ON aidilam_app.youtube_upload_sessions(project_id);
-CREATE INDEX idx_upload_sessions_job ON aidilam_app.youtube_upload_sessions(publishing_job_id);
-CREATE INDEX idx_upload_sessions_status ON aidilam_app.youtube_upload_sessions(status) WHERE status IN ('uploading','interrupted','retry_wait','reconciliation_required');
-CREATE INDEX idx_upload_sessions_expiry ON aidilam_app.youtube_upload_sessions(expires_at) WHERE status NOT IN ('uploaded','cancelled','failed','expired');
-CREATE INDEX idx_upload_sessions_active ON aidilam_app.youtube_upload_sessions(project_id, publishing_job_id, publishing_attempt_id) WHERE status NOT IN ('uploaded','cancelled','failed','expired');
+CREATE INDEX IF NOT EXISTS idx_upload_sessions_project ON aidilam_app.youtube_upload_sessions(project_id);
+CREATE INDEX IF NOT EXISTS idx_upload_sessions_job ON aidilam_app.youtube_upload_sessions(publishing_job_id);
+CREATE INDEX IF NOT EXISTS idx_upload_sessions_status ON aidilam_app.youtube_upload_sessions(status) WHERE status IN ('uploading','interrupted','retry_wait','reconciliation_required');
+CREATE INDEX IF NOT EXISTS idx_upload_sessions_expiry ON aidilam_app.youtube_upload_sessions(expires_at) WHERE status NOT IN ('uploaded','cancelled','failed','expired');
+CREATE INDEX IF NOT EXISTS idx_upload_sessions_active ON aidilam_app.youtube_upload_sessions(project_id, publishing_job_id, publishing_attempt_id) WHERE status NOT IN ('uploaded','cancelled','failed','expired');
 
 -- YouTube Upload Checkpoints
 CREATE TABLE IF NOT EXISTS aidilam_app.youtube_upload_checkpoints (
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS aidilam_app.youtube_upload_checkpoints (
   CONSTRAINT chk_accepted_le_range CHECK (bytes_accepted <= (byte_end - byte_start))
 );
 
-CREATE INDEX idx_upload_checkpoints_session ON aidilam_app.youtube_upload_checkpoints(upload_session_id);
-CREATE INDEX idx_upload_checkpoints_project ON aidilam_app.youtube_upload_checkpoints(project_id);
-CREATE INDEX idx_upload_checkpoints_ordered ON aidilam_app.youtube_upload_checkpoints(upload_session_id, byte_start ASC);
-CREATE INDEX idx_upload_checkpoints_accepted ON aidilam_app.youtube_upload_checkpoints(upload_session_id) WHERE status = 'accepted';
+CREATE INDEX IF NOT EXISTS idx_upload_checkpoints_session ON aidilam_app.youtube_upload_checkpoints(upload_session_id);
+CREATE INDEX IF NOT EXISTS idx_upload_checkpoints_project ON aidilam_app.youtube_upload_checkpoints(project_id);
+CREATE INDEX IF NOT EXISTS idx_upload_checkpoints_ordered ON aidilam_app.youtube_upload_checkpoints(upload_session_id, byte_start ASC);
+CREATE INDEX IF NOT EXISTS idx_upload_checkpoints_accepted ON aidilam_app.youtube_upload_checkpoints(upload_session_id) WHERE status = 'accepted';
