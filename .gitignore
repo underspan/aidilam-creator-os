@@ -28,12 +28,12 @@ tmp/
 # Management state (SSH keys, runtime tokens)
 .management-state/
 
-# Media and storage (runtime-generated)
-uploads/
-downloads/
-rendered/
-media/
-storage/
+# Media and storage (runtime-generated, root-level only)
+/uploads/
+/downloads/
+/rendered/
+/media/
+/storage/
 
 # Database data
 pgdata/
